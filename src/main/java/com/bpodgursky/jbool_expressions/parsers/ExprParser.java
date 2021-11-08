@@ -1,10 +1,6 @@
 package com.bpodgursky.jbool_expressions.parsers;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-
+import com.bpodgursky.jbool_expressions.*;
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
@@ -12,12 +8,9 @@ import org.antlr.runtime.TokenStream;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.Tree;
 
-import com.bpodgursky.jbool_expressions.And;
-import com.bpodgursky.jbool_expressions.Expression;
-import com.bpodgursky.jbool_expressions.Literal;
-import com.bpodgursky.jbool_expressions.Not;
-import com.bpodgursky.jbool_expressions.Or;
-import com.bpodgursky.jbool_expressions.Variable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ExprParser {
 
@@ -29,11 +22,11 @@ public class ExprParser {
     try {
       //lexer splits input into tokens
       ANTLRStringStream input = new ANTLRStringStream(expression);
-      TokenStream tokens = new CommonTokenStream(new BooleanExprLexer(input));
+      TokenStream tokens = new CommonTokenStream(new CPPExprLexer(input));
 
       //parser generates abstract syntax tree
-      BooleanExprParser parser = new BooleanExprParser(tokens);
-      BooleanExprParser.expression_return ret = parser.expression();
+      CPPExprParser parser = new CPPExprParser(tokens);
+      CPPExprParser.expression_return ret = parser.expression();
 
       //acquire parse result
       CommonTree ast = (CommonTree)ret.getTree();
@@ -44,12 +37,12 @@ public class ExprParser {
   }
 
   public static <T> Expression<T> parse(Tree tree, TokenMapper<T> mapper) {
-    if (tree.getType() == BooleanExprParser.AND) {
+    if (tree.getType() == CPPExprParser.AND) {
       List<Expression<T>> children = new ArrayList<>();
       for (int i = 0; i < tree.getChildCount(); i++) {
         Tree child = tree.getChild(i);
         Expression<T> parse = parse(child, mapper);
-        if (child.getType() == BooleanExprParser.AND) {
+        if (child.getType() == CPPExprParser.AND) {
           children.addAll(Arrays.asList(((And<T>)parse).expressions));
         } else {
           children.add(parse);
@@ -57,35 +50,57 @@ public class ExprParser {
       }
 
       return And.of(children);
-    } else if (tree.getType() == BooleanExprParser.OR) {
+    } else if (tree.getType() == CPPExprParser.OR) {
       List<Expression<T>> children = new ArrayList<>();
       for (int i = 0; i < tree.getChildCount(); i++) {
         Tree child = tree.getChild(i);
         Expression<T> parse = parse(child, mapper);
-        if (child.getType() == BooleanExprParser.OR) {
+        if (child.getType() == CPPExprParser.OR) {
           children.addAll(Arrays.asList(((Or<T>)parse).expressions));
         } else {
           children.add(parse);
         }
       }
       return Or.of(children);
-    } else if (tree.getType() == BooleanExprParser.NOT) {
+    } else if (tree.getType() == CPPExprParser.NOT) {
       return Not.of(parse(tree.getChild(0), mapper));
-    } else if (tree.getType() == BooleanExprParser.NAME) {
+    } else if (tree.getType() == CPPExprParser.NAME) {
       return Variable.of(mapper.getVariable(tree.getText()));
-    } else if (tree.getType() == BooleanExprParser.QUOTED_NAME) {
+    } else if (tree.getType() == CPPExprParser.QUOTED_NAME) {
       return Variable.of(mapper.getVariable(tree.getText()));
-    } else if (tree.getType() == BooleanExprParser.DOUBLE_QUOTED_NAME) {
+    } else if (tree.getType() == CPPExprParser.DOUBLE_QUOTED_NAME) {
       return Variable.of(mapper.getVariable(tree.getText()));
-    } else if (tree.getType() == BooleanExprParser.TRUE) {
+    } else if (tree.getType() == CPPExprParser.TRUE) {
       return Literal.getTrue();
-    } else if (tree.getType() == BooleanExprParser.FALSE) {
+    } else if (tree.getType() == CPPExprParser.FALSE) {
       return Literal.getFalse();
-    } else if (tree.getType() == BooleanExprParser.LPAREN) {
+    } else if (tree.getType() == CPPExprParser.LPAREN) {
       return parse(tree.getChild(0), mapper);
+    } else if (tree.getType() == CPPExprParser.SUP) {
+      return getVariable(tree, mapper, "SUP");
+    } else if (tree.getType() == CPPExprParser.SUPEQ) {
+      return getVariable(tree, mapper, "SUPEQ");
+    } else if (tree.getType() == CPPExprParser.INF) {
+      return getVariable(tree, mapper, "INF");
+    } else if (tree.getType() == CPPExprParser.INFEQ) {
+      return getVariable(tree, mapper, "INFEQ");
+    } else if (tree.getType() == CPPExprParser.PLUS) {
+      return getVariable(tree, mapper, "PLUS");
+    } else if (tree.getType() == CPPExprParser.MINUS) {
+      return getVariable(tree, mapper, "MINUS");
+    }  else if (tree.getType() == CPPExprParser.TIMES) {
+      return getVariable(tree, mapper, "TIMES");
     } else {
       throw new RuntimeException("Unrecognized! " + tree.getType() + " " + tree.getText());
     }
+  }
+
+  private static <T> Variable <T> getVariable(Tree tree, TokenMapper <T> mapper, String joiner) {
+    return Variable.of(mapper.getVariable(String.format("[%s]_%s_[%s]", parseAndToString(tree, mapper, 0), joiner, parseAndToString(tree, mapper, 1))));
+  }
+
+  private static <T> String parseAndToString(Tree tree, TokenMapper <T> mapper, int childIndex) {
+    return parse(tree.getChild(childIndex), mapper).toLexicographicString();
   }
 
 }

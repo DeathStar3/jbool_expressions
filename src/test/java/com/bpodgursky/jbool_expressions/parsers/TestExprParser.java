@@ -1,7 +1,12 @@
 package com.bpodgursky.jbool_expressions.parsers;
 
 import com.bpodgursky.jbool_expressions.*;
+import com.bpodgursky.jbool_expressions.rules.RuleSet;
 import org.junit.Assert;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class TestExprParser extends JBoolTestCase {
 
@@ -100,8 +105,75 @@ public class TestExprParser extends JBoolTestCase {
 
   }
 
+  public void testSimpleSUP() {
+    assertLexEquals(Variable.of("[A]_SUP_[B]"), ExprParser.parse("A > B"));
+  }
+
+  public void testSimpleINF() {
+    assertLexEquals(Variable.of("[A]_INF_[B]"), ExprParser.parse("A < B"));
+  }
+
+  public void testSimpleSUPEQ() {
+    assertLexEquals(Variable.of("[A]_SUPEQ_[B]"), ExprParser.parse("A >= B"));
+  }
+
+  public void testSimpleINFEQ() {
+    assertLexEquals(Variable.of("[A]_INFEQ_[B]"), ExprParser.parse("A <= B"));
+  }
+
+  public void testSimplePLUS() {
+    assertLexEquals(Variable.of("[A]_PLUS_[B]"), ExprParser.parse("A + B"));
+  }
+
+  public void testSimpleMINUS() {
+    assertLexEquals(Variable.of("[A]_MINUS_[B]"), ExprParser.parse("A - B"));
+  }
+
+  public void testSimpleTIMES() {
+    assertLexEquals(Variable.of("[A]_TIMES_[B]"), ExprParser.parse("A * B"));
+  }
+
+  public void testSUPOfPLUS() {
+    assertLexEquals(Variable.of("[[A]_PLUS_[B]]_SUP_[C]"), ExprParser.parse("(A + B) > C"));
+  }
+
+  public void testANDOfSUPAndINF() {
+    Expression <String> parse = ExprParser.parse("(A > 3) & (A < 6)");
+    assertTrue(parse instanceof And);
+    List <Expression <String>> children = parse.getChildren();
+    assertTrue(children.stream().allMatch(expr -> expr instanceof Variable));
+    assertTrue(children.contains(Variable.of("[A]_SUP_[3]")));
+    assertTrue(children.contains(Variable.of("[A]_INF_[6]")));
+  }
+
+  public void testOROfINFEQAndSUPEQ() {
+    Expression <String> parse = ExprParser.parse("(A <= 10) | (B >= 7)");
+    assertTrue(parse instanceof Or);
+    List <Expression <String>> children = parse.getChildren();
+    assertTrue(children.stream().allMatch(expr -> expr instanceof Variable));
+    assertTrue(children.contains(Variable.of("[A]_INFEQ_[10]")));
+    assertTrue(children.contains(Variable.of("[B]_SUPEQ_[7]")));
+  }
+
+  public void testComplicated() {
+    String str = "(((__GNUC__ * 100) + __GNUC_MINOR__) >= 405) & ((__GNUC__) & __GNUC__ >= 3)";
+    Expression <String> parse = ExprParser.parse(str);
+    assertTrue(parse instanceof And);
+    List <Expression <String>> children = parse.getChildren();
+    Optional <Expression <String>> variableSide = children.stream().filter(expr -> expr instanceof Variable).collect(Collectors.toList()).stream().findFirst();
+    assertTrue(variableSide.isPresent());
+    assertEquals("[[[__GNUC__]_TIMES_[100]]_PLUS_[__GNUC_MINOR__]]_SUPEQ_[405]", variableSide.get().toLexicographicString());
+    Optional <Expression <String>> andSide = children.stream().filter(expr -> expr instanceof And).collect(Collectors.toList()).stream().findFirst();
+    assertTrue(andSide.isPresent());
+    List <Expression <String>> andSideChildren = andSide.get().getChildren();
+    assertTrue(andSideChildren.stream().allMatch(expr -> expr instanceof Variable));
+    assertTrue(andSideChildren.contains(Variable.of("__GNUC__")));
+    assertTrue(andSideChildren.contains(Variable.of("[__GNUC__]_SUPEQ_[3]")));
+  }
+
   private void assertLexEquals(Expression expected, Expression actual) {
     Assert.assertEquals(expected, actual);
     Assert.assertEquals(expected.toLexicographicString(), actual.toLexicographicString());
   }
+
 }
