@@ -38,4 +38,6 @@ orexpression : andexpression (OR^ andexpression)*;
 andexpression : notexpression (AND^ notexpression)*;
 notexpression : NOT^ notexpression | nonboolexpression;
 nonboolexpression : atom ((TIMES | PLUS | MINUS | SUP | INF | SUPEQ | INFEQ)^ atom)*;
-atom : TRUE | FALSE | NAME | QUOTED_NAME | DOUBLE_QUOTED_NAME | LPAREN^ orexpression RPAREN!;
+atom : TRUE | FALSE | NAME^ (LPAREN! NAME (','! (NAME | quotedname))* RPAREN!)* | quotedname | LPAREN^ orexpression RPAREN!;
+quotedname : QUOTED_NAME | DOUBLE_QUOTED_NAME;
+

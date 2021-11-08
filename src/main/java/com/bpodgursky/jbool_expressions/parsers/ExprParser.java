@@ -11,6 +11,7 @@ import org.antlr.runtime.tree.Tree;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ExprParser {
 
@@ -65,7 +66,16 @@ public class ExprParser {
     } else if (tree.getType() == CPPExprParser.NOT) {
       return Not.of(parse(tree.getChild(0), mapper));
     } else if (tree.getType() == CPPExprParser.NAME) {
-      return Variable.of(mapper.getVariable(tree.getText()));
+      if (tree.getChildCount() == 0) {
+        return Variable.of(mapper.getVariable(tree.getText()));
+      } else {
+        List<String> params = new ArrayList <>();
+        for (int i = 0 ; i < tree.getChildCount() ; i++) {
+          params.add(tree.getChild(i).getText());
+        }
+        String variableText = String.format("MACRO[%s]PARAMS[%s]", tree.getText(), String.join(",", params));
+        return Variable.of(mapper.getVariable(variableText));
+      }
     } else if (tree.getType() == CPPExprParser.QUOTED_NAME) {
       return Variable.of(mapper.getVariable(tree.getText()));
     } else if (tree.getType() == CPPExprParser.DOUBLE_QUOTED_NAME) {

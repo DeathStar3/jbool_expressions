@@ -3,6 +3,7 @@ package com.bpodgursky.jbool_expressions.parsers;
 import com.bpodgursky.jbool_expressions.*;
 import com.bpodgursky.jbool_expressions.rules.RuleSet;
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.List;
 import java.util.Optional;
@@ -169,6 +170,29 @@ public class TestExprParser extends JBoolTestCase {
     assertTrue(andSideChildren.stream().allMatch(expr -> expr instanceof Variable));
     assertTrue(andSideChildren.contains(Variable.of("__GNUC__")));
     assertTrue(andSideChildren.contains(Variable.of("[__GNUC__]_SUPEQ_[3]")));
+  }
+
+  public void testVariadicMacro() {
+    assertLexEquals(Variable.of("MACRO[XXH_HAS_BUILTIN]PARAMS[__builtin_rotateleft32]"), ExprParser.parse("(XXH_HAS_BUILTIN(__builtin_rotateleft32))"));
+  }
+
+  public void testVariadicMacroMultipleArguments() {
+    assertLexEquals(Variable.of("MACRO[XXH_HAS_BUILTIN]PARAMS[__builtin_rotateleft32,__builtin_rotateleft64]"), ExprParser.parse("(XXH_HAS_BUILTIN(__builtin_rotateleft32,__builtin_rotateleft64))"));
+  }
+
+  public void testExpressionWithVariadicMacro() {
+    Expression <String> parse = ExprParser.parse("MACRO1(_param1_,__param2) > 10 & (MACRO2(PARAM2) | FEATURE)");
+    assertTrue(parse instanceof And);
+    List <Expression <String>> children = parse.getChildren();
+    Optional <Expression <String>> variableSide = children.stream().filter(expr -> expr instanceof Variable).collect(Collectors.toList()).stream().findFirst();
+    assertTrue(variableSide.isPresent());
+    assertEquals(Variable.of("[MACRO[MACRO1]PARAMS[_param1_,__param2]]_SUP_[10]"), variableSide.get());
+    Optional <Expression <String>> orSide = children.stream().filter(expr -> expr instanceof Or).collect(Collectors.toList()).stream().findFirst();
+    assertTrue(orSide.isPresent());
+    List <Expression <String>> orChildren = orSide.get().getChildren();
+    assertTrue(orChildren.contains(Variable.of("MACRO[MACRO2]PARAMS[PARAM2]")));
+    assertTrue(orChildren.contains(Variable.of("FEATURE")));
+    System.out.println(parse);
   }
 
   private void assertLexEquals(Expression expected, Expression actual) {
