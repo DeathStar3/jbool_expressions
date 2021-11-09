@@ -122,6 +122,14 @@ public class TestExprParser extends JBoolTestCase {
     assertLexEquals(Variable.of("[A]_INFEQ_[B]"), ExprParser.parse("A <= B"));
   }
 
+  public void testSimpleRIGHTSHIFT() {
+    assertLexEquals(Variable.of("[A]_RIGHTSHIFT_[B]"), ExprParser.parse("A >> B"));
+  }
+
+  public void testSimpleLEFTSHIFT() {
+    assertLexEquals(Variable.of("[A]_LEFTSHIFT_[B]"), ExprParser.parse("A << B"));
+  }
+
   public void testSimplePLUS() {
     assertLexEquals(Variable.of("[A]_PLUS_[B]"), ExprParser.parse("A + B"));
   }
@@ -130,12 +138,45 @@ public class TestExprParser extends JBoolTestCase {
     assertLexEquals(Variable.of("[A]_MINUS_[B]"), ExprParser.parse("A - B"));
   }
 
-  public void testOtherMINUS() {
-    assertLexEquals(Variable.of("[A]_MINUS_[B]"), ExprParser.parse("INT_MIN == -32768"));
+  public void testUnaryMINUS() {
+    assertLexEquals(Variable.of("[INT_MIN]_EQ_[_MINUS_[32768]]"), ExprParser.parse("INT_MIN == -32768"));
+  }
+
+  public void testSimpleBITNOT() {
+    assertLexEquals(Variable.of("_BITNOT_[MSGPACK_PP_CONFIG_FLAGS]"), ExprParser.parse("(~MSGPACK_PP_CONFIG_FLAGS)"));
+  }
+
+  public void testBITNOT() {
+    String expression = "(~MSGPACK_PP_CONFIG_FLAGS() & MSGPACK_PP_CONFIG_EDG()) & (! MSGPACK_PREPROCESSOR_ARITHMETIC_MOD_HPP)";
+    Expression <String> parse = ExprParser.parse(expression);
+    assertTrue(parse instanceof And);
+    assertTrue(parse.getAllK().contains("_BITNOT_[MSGPACK_PP_CONFIG_FLAGS]"));
+    assertTrue(parse.getAllK().contains("MSGPACK_PP_CONFIG_EDG"));
+    assertTrue(parse.getAllK().contains("MSGPACK_PREPROCESSOR_ARITHMETIC_MOD_HPP"));
+//    assertLexEquals(Variable.of("(_BITNOT_[MSGPACK_PP_CONFIG_FLAGS]) & MSGPACK_PP_CONFIG_EDG & (! MSGPACK_PREPROCESSOR_ARITHMETIC_MOD_HPP)"), parse);
   }
 
   public void testSimpleTIMES() {
     assertLexEquals(Variable.of("[A]_TIMES_[B]"), ExprParser.parse("A * B"));
+  }
+
+  public void testSimpleDIV() {
+    assertLexEquals(Variable.of("[A]_DIV_[B]"), ExprParser.parse("A / B"));
+  }
+
+  public void testSimpleMOD() {
+    assertLexEquals(Variable.of("[A]_MOD_[B]"), ExprParser.parse("A % B"));
+  }
+
+  public void testComplexMOD() {
+    String expression = "((BOOST_VERSION / 100000) >= 1 & ((BOOST_VERSION / 100) % 1000) >= 53) & (((MSGPACK_USE_BOOST)) & (! MSGPACK_V1_TYPE_BOOST_MSGPACK_VARIANT_HPP))";
+    Expression <String> parse = ExprParser.parse(expression);
+    assertTrue(parse instanceof And);
+    assertTrue(parse.getAllK().contains("[[BOOST_VERSION]_DIV_[100000]]_SUPEQ_[1]"));
+    assertTrue(parse.getAllK().contains("[[[BOOST_VERSION]_DIV_[100]]_MOD_[1000]]_SUPEQ_[53]"));
+    assertTrue(parse.getAllK().contains("MSGPACK_USE_BOOST"));
+    assertTrue(parse.getAllK().contains("MSGPACK_V1_TYPE_BOOST_MSGPACK_VARIANT_HPP"));
+//    assertLexEquals(Variable.of("([[BOOST_VERSION]_DIV_[100000]]_SUPEQ_[1] & [[[BOOST_VERSION]_DIV_[100]]_MOD_[1000]]_SUPEQ_[53]) & (((MSGPACK_USE_BOOST)) & (! MSGPACK_V1_TYPE_BOOST_MSGPACK_VARIANT_HPP))"), parse);
   }
 
   public void testSimpleDIFF() {
@@ -204,7 +245,10 @@ public class TestExprParser extends JBoolTestCase {
     List <Expression <String>> orChildren = orSide.get().getChildren();
     assertTrue(orChildren.contains(Variable.of("MACRO[MACRO2]PARAMS[PARAM2]")));
     assertTrue(orChildren.contains(Variable.of("FEATURE")));
-    System.out.println(parse);
+  }
+
+  public void testVariableNameWithDollarSign() {
+    assertLexEquals(Variable.of("mozilla_$"), ExprParser.parse("mozilla_$"));
   }
 
   private void assertLexEquals(Expression expected, Expression actual) {

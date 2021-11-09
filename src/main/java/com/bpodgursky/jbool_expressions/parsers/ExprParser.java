@@ -69,6 +69,13 @@ public class ExprParser {
       if (tree.getChildCount() == 0) {
         return Variable.of(mapper.getVariable(tree.getText()));
       } else {
+        if (tree.getChildCount() == 1) {
+          if (tree.getChild(0).getType() == CPPExprParser.MINUS) {
+            return Variable.of(mapper.getVariable(String.format("_MINUS_[%s]", tree.getText())));
+          } else if (tree.getChild(0).getType() == CPPExprParser.BITNOT) {
+            return Variable.of(mapper.getVariable(String.format("_BITNOT_[%s]", tree.getText())));
+          }
+        }
         List<String> params = new ArrayList <>();
         for (int i = 0 ; i < tree.getChildCount() ; i++) {
           params.add(tree.getChild(i).getText());
@@ -100,10 +107,20 @@ public class ExprParser {
       return getVariable(tree, mapper, "MINUS");
     }  else if (tree.getType() == CPPExprParser.TIMES) {
       return getVariable(tree, mapper, "TIMES");
+    }  else if (tree.getType() == CPPExprParser.DIV) {
+      return getVariable(tree, mapper, "DIV");
+    }  else if (tree.getType() == CPPExprParser.MOD) {
+      return getVariable(tree, mapper, "MOD");
     }  else if (tree.getType() == CPPExprParser.DIFF) {
       return getVariable(tree, mapper, "DIFF");
     }  else if (tree.getType() == CPPExprParser.EQ) {
       return getVariable(tree, mapper, "EQ");
+    }  else if (tree.getType() == CPPExprParser.BITNOT) {
+      return getVariable(tree, mapper, "BITNOT");
+    }  else if (tree.getType() == CPPExprParser.LEFTSHIFT) {
+      return getVariable(tree, mapper, "LEFTSHIFT");
+    }  else if (tree.getType() == CPPExprParser.RIGHTSHIFT) {
+      return getVariable(tree, mapper, "RIGHTSHIFT");
     } else {
       throw new RuntimeException("Unrecognized! " + tree.getType() + " " + tree.getText());
     }
