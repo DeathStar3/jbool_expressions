@@ -233,6 +233,10 @@ public class TestExprParser extends JBoolTestCase {
     assertLexEquals(Variable.of("MACRO[XXH_HAS_BUILTIN]PARAMS[__builtin_rotateleft32,__builtin_rotateleft64]"), ExprParser.parse("(XXH_HAS_BUILTIN(__builtin_rotateleft32,__builtin_rotateleft64))"));
   }
 
+//  public void testVariadicMacroWithArgumentHavingInfAndSupSigns() {
+//    assertLexEquals(Variable.of("MACRO[__has_include]PARAMS[<tuple>]"), ExprParser.parse("__has_include(<tuple>)"));
+//  }
+
   public void testExpressionWithVariadicMacro() {
     Expression <String> parse = ExprParser.parse("MACRO1(_param1_,__param2) > 10 & (MACRO2(PARAM2) | FEATURE)");
     assertTrue(parse instanceof And);
@@ -249,6 +253,21 @@ public class TestExprParser extends JBoolTestCase {
 
   public void testVariableNameWithDollarSign() {
     assertLexEquals(Variable.of("mozilla_$"), ExprParser.parse("mozilla_$"));
+  }
+
+  public void testVariableNameWithSlashSign() {
+    assertLexEquals(Variable.of("moz/clang"), ExprParser.parse("moz/clang"));
+  }
+
+  public void testVariableNameWithTwoDotsSign() {
+    assertLexEquals(Variable.of("moz::clang"), ExprParser.parse("moz::clang"));
+  }
+
+  public void testAThing() {
+    String expression = "(BOCU1_MAX_TRAIL<0xff) & (!UCONFIG_NO_CONVERSION & !UCONFIG_ONLY_HTML_CONVERSION)";
+    Expression <String> parse = ExprParser.parse(expression);
+    assertTrue(parse.getAllK().contains("[BOCU1_MAX_TRAIL]_INF_[0xff]"));
+//    assertLexEquals(Variable.of("((!UCONFIG_NO_CONVERSION & !UCONFIG_ONLY_HTML_CONVERSION) & [BOCU1_MAX_TRAIL]_INF_[0xff])"), parse);
   }
 
   private void assertLexEquals(Expression expected, Expression actual) {
