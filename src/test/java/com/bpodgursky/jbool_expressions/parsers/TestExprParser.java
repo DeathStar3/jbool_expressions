@@ -130,8 +130,20 @@ public class TestExprParser extends JBoolTestCase {
     assertLexEquals(Variable.of("[A]_MINUS_[B]"), ExprParser.parse("A - B"));
   }
 
+  public void testOtherMINUS() {
+    assertLexEquals(Variable.of("[A]_MINUS_[B]"), ExprParser.parse("INT_MIN == -32768"));
+  }
+
   public void testSimpleTIMES() {
     assertLexEquals(Variable.of("[A]_TIMES_[B]"), ExprParser.parse("A * B"));
+  }
+
+  public void testSimpleDIFF() {
+    assertLexEquals(Variable.of("[A]_DIFF_[B]"), ExprParser.parse("A != B"));
+  }
+
+  public void testSimpleEQ() {
+    assertLexEquals(Variable.of("[A]_EQ_[B]"), ExprParser.parse("A == B"));
   }
 
   public void testSUPOfPLUS() {

@@ -100,6 +100,10 @@ public class ExprParser {
       return getVariable(tree, mapper, "MINUS");
     }  else if (tree.getType() == CPPExprParser.TIMES) {
       return getVariable(tree, mapper, "TIMES");
+    }  else if (tree.getType() == CPPExprParser.DIFF) {
+      return getVariable(tree, mapper, "DIFF");
+    }  else if (tree.getType() == CPPExprParser.EQ) {
+      return getVariable(tree, mapper, "EQ");
     } else {
       throw new RuntimeException("Unrecognized! " + tree.getType() + " " + tree.getText());
     }
