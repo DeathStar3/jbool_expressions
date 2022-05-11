@@ -14,14 +14,7 @@ public class SimplifyOr<K> extends Rule<Or<K>, K> {
 
     for (Expression<K> expr : input.expressions) {
       if (expr instanceof Literal) {
-        Literal l = (Literal) expr;
-
-        //  ignore anything that is "false"
-        if (!l.getValue()) {
-          return copyWithoutFalse(input, options.getExprFactory());
-        } else {
-          return Literal.of(true);
-        }
+        return getExpressionWithoutLiteral(input, options, (Literal) expr);
       }
 
       //  succeed immediately if require something or its opposite
@@ -38,7 +31,18 @@ public class SimplifyOr<K> extends Rule<Or<K>, K> {
     return input;
   }
 
-  private Expression<K> copyWithoutFalse(Or<K> input, ExprFactory<K> factory){
+  protected Expression <K> getExpressionWithoutLiteral(Or <K> input, ExprOptions <K> options, Literal expr) {
+    Literal l = expr;
+
+    //  ignore anything that is "false"
+    if (!l.getValue()) {
+      return copyWithoutFalse(input, options.getExprFactory());
+    } else {
+      return Literal.of(true);
+    }
+  }
+
+  protected Expression<K> copyWithoutFalse(Or<K> input, ExprFactory<K> factory){
     List<Expression<K>> copy = new ArrayList<>();
     for (Expression<K> expr : input.expressions) {
       if (expr instanceof Literal) {

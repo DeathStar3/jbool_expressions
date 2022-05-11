@@ -1,9 +1,7 @@
 package com.bpodgursky.jbool_expressions.rules;
 
 import com.bpodgursky.jbool_expressions.*;
-import com.bpodgursky.jbool_expressions.cache.RuleSetCache;
 import com.bpodgursky.jbool_expressions.options.ExprOptions;
-import com.bpodgursky.jbool_expressions.util.ExprFactory;
 
 import java.util.*;
 
@@ -14,13 +12,7 @@ public class SimplifyAnd<K> extends Rule<And<K>, K> {
 
     for (Expression<K> expr : input.expressions) {
       if (expr instanceof Literal) {
-        Literal l = (Literal) expr;
-
-        if (l.getValue()) {
-          return copyWithoutTrue(input, options);
-        } else {
-          return Literal.getFalse();
-        }
+        return getExpressionWithoutLiteral(input, options, (Literal) expr);
       }
 
       //  succeed immediately if require something or its opposite
@@ -37,7 +29,17 @@ public class SimplifyAnd<K> extends Rule<And<K>, K> {
     return input;
   }
 
-  private Expression<K> copyWithoutTrue(And<K> input, ExprOptions<K> options){
+  protected Expression <K> getExpressionWithoutLiteral(And <K> input, ExprOptions <K> options, Literal expr) {
+    Literal l = expr;
+
+    if (l.getValue()) {
+      return copyWithoutTrue(input, options);
+    } else {
+      return Literal.getFalse();
+    }
+  }
+
+  protected Expression<K> copyWithoutTrue(And<K> input, ExprOptions<K> options){
     List<Expression<K>> copy = new ArrayList<>();
     for (Expression<K> expr : input.expressions) {
       if (expr instanceof Literal) {

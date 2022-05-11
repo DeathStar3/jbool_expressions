@@ -1,0 +1,6 @@
+/**
+ * As far as conditional compilation is concerned, the decision if a block
+ * is selected or not is intrinsically boolean. Therefore, each expression that involves nonboolean flags and operators
+ * (e.g., ==, <, etc.) is replaced by a new free logic variable. For example,
+ * the expression #if CONFIG_BUFFER > 1024 is rewritten to #if defined CONFIG_COMPARATOR_1. (Sincero et al. 2010)
+ */
