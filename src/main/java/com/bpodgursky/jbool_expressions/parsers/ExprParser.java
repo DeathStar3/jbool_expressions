@@ -66,6 +66,13 @@ public class ExprParser {
     } else if (tree.getType() == CPPExprParser.NOT) {
       return Not.of(parse(tree.getChild(0), mapper));
     } else if (tree.getType() == CPPExprParser.NAME) {
+      if (null == tree.getAncestors() || tree.getParent().getType() == CPPExprParser.EQ || tree.getParent().getType() == CPPExprParser.DIFF || tree.getParent().getType() == CPPExprParser.NOT || tree.getParent().getType() == CPPExprParser.AND || tree.getParent().getType() == CPPExprParser.OR) {
+        if (tree.getText().equals("0")){
+          return Literal.getFalse();
+        } else if (tree.getText().equals("1")) {
+          return Literal.getTrue();
+        }
+      }
       if (tree.getChildCount() == 0) {
         return Variable.of(mapper.getVariable(tree.getText()));
       } else {

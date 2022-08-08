@@ -263,6 +263,38 @@ public class TestExprParser extends JBoolTestCase {
     assertLexEquals(Variable.of("moz::clang"), ExprParser.parse("moz::clang"));
   }
 
+  public void testZeroAsFalse() {
+    assertLexEquals(Literal.getFalse(), ExprParser.parse("0"));
+  }
+
+  public void testNotZeroAsTrue() {
+    assertLexEquals(Literal.getTrue(), RuleSet.simplify(ExprParser.parse("!0")));
+  }
+
+  public void testOneAsTrue() {
+    assertLexEquals(Literal.getTrue(), ExprParser.parse("1"));
+  }
+
+  public void testNotOneAsFalse() {
+    assertLexEquals(Literal.getFalse(), RuleSet.simplify(ExprParser.parse("!1")));
+  }
+
+  public void testAndZeroAsFalse() {
+    assertLexEquals(Literal.getFalse(), RuleSet.simplify(ExprParser.parse("A & 0")));
+  }
+
+  public void testAndOneAsA() {
+    assertLexEquals(Variable.of("A"), RuleSet.simplify(ExprParser.parse("A & 1")));
+  }
+
+  public void testOrZeroAsA() {
+    assertLexEquals(Variable.of("A"), RuleSet.simplify(ExprParser.parse("A | 0")));
+  }
+
+  public void testOrOneAsTrue() {
+    assertLexEquals(Literal.getTrue(), RuleSet.simplify(ExprParser.parse("A | 1")));
+  }
+
   public void testAThing() {
     String expression = "(BOCU1_MAX_TRAIL<0xff) & (!UCONFIG_NO_CONVERSION & !UCONFIG_ONLY_HTML_CONVERSION)";
     Expression <String> parse = ExprParser.parse(expression);
